@@ -2,16 +2,28 @@
 
 const express = require('express')
 const app = express()
+const bodyParser = require('body-parser');
 
 const Validate = require('./validate');
 const Function = require('./function');
+
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json());
+
+ // Simple logger
+const log = (req, res, next)=>{
+    console.log("Request: " + req.originalUrl + " Body: " + JSON.stringify(req.body));
+    next();
+};
+app.use(log);
 
 // Validate request key should be Oauth token, missing https implementation
 app.all('/*', function(req, res, next) {
     if(Validate.validateRequest(req)){
         next();
+    }else{
+        res.status(403).send('Forbidden');
     }
-    res.status(403).send('Forbidden')
 });
 
 // Create user
