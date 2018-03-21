@@ -3,7 +3,7 @@ const Validate = require('./validate');
 const uniqid = require('uniqid');
 const Promise = require('bluebird');
 
-// The credentials should be generated  from environment however for now we will ignore that and use this freeDB
+// The credentials should be generated from environment however for now we will ignore that and use this freeDB
 // Also dbScript.sql must be run to create schema and we will not use knex in this case to create the schema
 const knex = require('knex')({
     client: 'mysql',
@@ -28,20 +28,20 @@ const createUser = (req,res) =>{
                         return knex('USER_INFO').insert({id: id, type: info.type, text: info.text}); 
                     });
                     Promise.all(infoPromises).then(function(){
-                        res.send("User successfully added with id: " + id);
+                        res.send({id:id, message: "User successfully added"});
                     }).catch(function(error){
                         console.log(error);
-                        res.status(500).send('Internal Service Error');
+                        res.status(500).send({error: 500, message:"Internal Service Error"});
                     });
                 }else{
-                    res.send("User successfully added with id: " + id);
+                    res.send({id:id, message: "User successfully added"});
                 }
             }).catch(function(error){
                 console.log(error);
-                res.status(500).send('Internal Service Error');
+                res.status(500).send({error: 500, message:"Internal Service Error"});
             });
     }else{
-        res.status(500).send('Invalid Request');
+        res.status(400).send({error: 400, message:"Invalid Request"});
     }
 };
 module.exports.createUser = createUser;
@@ -66,20 +66,20 @@ const updateUser = (req,res) =>{
                             });
                         });
                         Promise.all(infoPromises).then(function(){
-                            res.send("User successfully updated with id: " + req.body.id);
+                            res.send({id:req.body.id, message: "User successfully updated"});
                         }).catch(function(error){
                             console.log(error);
-                            res.status(500).send('Internal Service Error');
+                            res.status(500).send({error: 500, message:"Internal Service Error"});
                         });
                     }else{
-                        res.send("User successfully added with id: " + id);
+                        res.send({id:req.body.id, message: "User successfully updated"});
                     }
                 }).catch(function(error){
                     console.log(error);
-                    res.status(500).send('Internal Service Error');
+                    res.status(500).send({error: 500, message:"Internal Service Error"});
                 });
         }else{
-            res.status(500).send('Invalid Request');
+            res.status(400).send({error: 400, message:"Invalid Request"});
         }
 };
 module.exports.updateUser = updateUser;
@@ -90,17 +90,17 @@ const deleteUser = (req,res) =>{
             knex('USER').where('id', req.body.id).del()
             .then(function () {
                     return knex('USER_INFO').where('id', req.body.id).del().then(function(){
-                        res.send("User successfully deleted with id: " + req.body.id);
+                        res.send({id:req.body.id, message: "User successfully deleted"});
                     }).catch(function(error){
                         console.log(error);
-                        res.status(500).send('Internal Service Error');
+                        res.status(500).send({error: 500, message:"Internal Service Error"});
                     });
             }).catch(function(error){
                 console.log(error);
-                res.status(500).send('Internal Service Error');
+                res.status(500).send({error: 500, message:"Internal Service Error"});
             });
     }else{
-        res.status(500).send('Invalid Request');
+        res.status(400).send({error: 400, message:"Invalid Request"});
     }
 };
 module.exports.deleteUser = deleteUser;
@@ -109,27 +109,31 @@ module.exports.deleteUser = deleteUser;
 const showUser = (req,res) =>{
     if(Validate.validateRequestBody(req.body, ["id"])){
         knex('USER').where('id', req.body.id).select('*').then(function(result){
-            var userObj = {
-                id: result[0].id,
-                firstName: result[0].firstName,
-                lastName: result[0].lastName,
-                birthDate: result[0].birthDate
-            };
-            return knex('USER_INFO').where('id', req.body.id).select('*').then(function(result){
-                var info = result.map(function(data){
-                    return {type: data.type,text: data.text};
+            if(result.length > 0){
+                var userObj = {
+                    id: result[0].id,
+                    firstName: result[0].firstName,
+                    lastName: result[0].lastName,
+                    birthDate: result[0].birthDate
+                };
+                return knex('USER_INFO').where('id', req.body.id).select('*').then(function(result){
+                    var info = result.map(function(data){
+                        return {type: data.type,text: data.text};
+                    });
+                    userObj.info = info;
+                    return  userObj;
                 });
-                userObj.info = info;
-                return  userObj;
-            });
+            }else{
+                res.status(401).send({error: 401, message:"Data not found"});
+            }
         }).then(function(response){
             res.send(response);
         }).catch(function(error){
             console.log(error);
-            res.status(500).send('Internal Service Error');
+            res.status(500).send({error: 500, message:"Internal Service Error"});
         });
     }else{
-        res.status(500).send('Invalid Request');
+        res.status(400).send({error: 400, message:"Invalid Request"});
     }
 };
 module.exports.showUser = showUser;

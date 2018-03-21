@@ -3,6 +3,8 @@
 const express = require('express')
 const app = express()
 const bodyParser = require('body-parser');
+const swaggerUi = require('swagger-ui-express');
+const swaggerDocument = require('./swagger.json');
 
 const Validate = require('./validate');
 const Function = require('./function');
@@ -18,33 +20,36 @@ const log = (req, res, next)=>{
 app.use(log);
 
 // Validate request key should be Oauth token, missing https implementation
-app.all('/*', function(req, res, next) {
+app.all('/user/*', function(req, res, next) {
     if(Validate.validateRequest(req)){
         next();
     }else{
-        res.status(403).send('Forbidden');
+        res.status(403).send({error: 403, message:'Forbidden'});
     }
 });
 
 // Create user
-app.post('/create', function (req, res) {
+app.post('/user/create', function (req, res) {
     Function.createUser(req, res);
 });
 
 // Update user
-app.post('/update', function (req, res) {
+app.post('/user/update', function (req, res) {
     Function.updateUser(req, res);
 });
 
 // Delete user
-app.post('/delete', function (req, res) {
+app.post('/user/delete', function (req, res) {
     Function.deleteUser(req, res);
 });
 
 // Show user
-app.post('/show', function (req, res) {
+app.post('/user/show', function (req, res) {
     Function.showUser(req, res);
 });
+
+// Swaager
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 // Start server
 app.listen(3000, () => console.log('App listening on port 3000!'))
