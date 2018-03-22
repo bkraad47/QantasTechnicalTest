@@ -23,6 +23,10 @@ To check Swagger information start the server and visit `http://localhost:3000/a
 `1234`
 
 
+## Accepted Date Format
+
+`YYYY-MM-DD`
+
 ## Missing Options
 
 1. OAuth - Tokens
